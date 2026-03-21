@@ -35,7 +35,7 @@
 
 ## 2. 추상화 개선점
 
-### 2.1 인라인 타입 반복 → 기존 인터페이스 활용
+### 2.1 인라인 타입 반복 → 기존 인터페이스 활용 ✅
 
 - `src/_tosslib/server/types.ts`에 `Room`, `Reservation`, `Equipment` 인터페이스가 이미 정의되어 있음
 - 그런데 `src/pages/remotes.ts`와 페이지 컴포넌트에서 동일한 타입을 인라인으로 반복 선언하고 있음

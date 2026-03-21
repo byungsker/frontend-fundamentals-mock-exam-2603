@@ -1,11 +1,12 @@
 import { css } from '@emotion/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Border, Button, ListRow, Select, Spacing, Text, Top } from '_tosslib/components';
+import { colors } from '_tosslib/constants/colors';
+import axios from 'axios';
+import { createReservation, getReservations, getRooms } from 'pages/remotes';
+import { Equipment, Reservation, Room } from '_tosslib/server/types';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Top, Spacing, Border, Button, Text, Select, ListRow } from '_tosslib/components';
-import { colors } from '_tosslib/constants/colors';
-import { getRooms, getReservations, createReservation } from 'pages/remotes';
-import axios from 'axios';
 
 const EQUIPMENT_LABELS: Record<string, string> = {
   tv: 'TV',
@@ -14,7 +15,7 @@ const EQUIPMENT_LABELS: Record<string, string> = {
   speaker: '스피커',
 };
 
-const ALL_EQUIPMENT = ['tv', 'whiteboard', 'video', 'speaker'];
+const ALL_EQUIPMENT: Equipment[] = ['tv', 'whiteboard', 'video', 'speaker'];
 
 const TIME_SLOTS: string[] = [];
 for (let h = 9; h <= 20; h++) {
@@ -40,8 +41,8 @@ export function RoomBookingPage() {
   const [startTime, setStartTime] = useState(searchParams.get('startTime') || '');
   const [endTime, setEndTime] = useState(searchParams.get('endTime') || '');
   const [attendees, setAttendees] = useState(Number(searchParams.get('attendees')) || 1);
-  const [equipment, setEquipment] = useState<string[]>(
-    searchParams.get('equipment') ? searchParams.get('equipment')!.split(',').filter(Boolean) : []
+  const [equipment, setEquipment] = useState<Equipment[]>(
+    searchParams.get('equipment') ? (searchParams.get('equipment')!.split(',').filter(Boolean) as Equipment[]) : []
   );
   const [preferredFloor, setPreferredFloor] = useState<number | null>(
     searchParams.get('floor') ? Number(searchParams.get('floor')) : null
@@ -67,8 +68,7 @@ export function RoomBookingPage() {
   });
 
   const createMutation = useMutation(
-    (data: { roomId: string; date: string; start: string; end: string; attendees: number; equipment: string[] }) =>
-      createReservation(data),
+    (data: Omit<Reservation, 'id'>) => createReservation(data),
     {
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries(['reservations', variables.date]);
@@ -96,22 +96,21 @@ export function RoomBookingPage() {
   const isFilterComplete = hasTimeInputs && !validationError;
 
   // 필터링
-  const floors = [...new Set(rooms.map((r: { floor: number }) => r.floor))].sort((a: number, b: number) => a - b);
+  const floors = [...new Set(rooms.map((r: Room) => r.floor))].sort((a, b) => a - b);
 
   const availableRooms = isFilterComplete
     ? rooms
-        .filter((room: { id: string; capacity: number; equipment: string[]; floor: number }) => {
+        .filter((room: Room) => {
           if (room.capacity < attendees) return false;
           if (!equipment.every(eq => room.equipment.includes(eq))) return false;
           if (preferredFloor !== null && room.floor !== preferredFloor) return false;
           const hasConflict = reservations.some(
-            (r: { roomId: string; date: string; start: string; end: string }) =>
-              r.roomId === room.id && r.date === date && r.start < endTime && r.end > startTime
+            (r: Reservation) => r.roomId === room.id && r.date === date && r.start < endTime && r.end > startTime
           );
           if (hasConflict) return false;
           return true;
         })
-        .sort((a: { floor: number; name: string }, b: { floor: number; name: string }) => {
+        .sort((a: Room, b: Room) => {
           if (a.floor !== b.floor) return a.floor - b.floor;
           return a.name.localeCompare(b.name);
         })
@@ -534,7 +533,7 @@ export function RoomBookingPage() {
               `}
             >
               {availableRooms.map(
-                (room: { id: string; name: string; floor: number; capacity: number; equipment: string[] }) => {
+                (room: Room) => {
                   const isSelected = selectedRoomId === room.id;
                   return (
                     <div

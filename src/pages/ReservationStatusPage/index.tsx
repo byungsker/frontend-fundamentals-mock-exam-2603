@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { getRooms, getReservations, getMyReservations, cancelReservation } from 'pages/remotes';
+import { Room, Reservation } from '_tosslib/server/types';
 
 const EQUIPMENT_LABELS: Record<string, string> = {
   tv: 'TV',
@@ -80,7 +81,7 @@ export function ReservationStatusPage() {
   const [activeReservation, setActiveReservation] = useState<string | null>(null);
 
   const getRoomName = (roomId: string) =>
-    rooms.find((r: { id: string; name: string }) => r.id === roomId)?.name ?? roomId;
+    rooms.find((r: Room) => r.id === roomId)?.name ?? roomId;
 
   return (
     <div
@@ -213,8 +214,8 @@ export function ReservationStatusPage() {
           </div>
 
           {/* 회의실별 타임라인 */}
-          {rooms.map((room: { id: string; name: string }, index: number) => {
-            const roomReservations = reservations.filter((r: { roomId: string }) => r.roomId === room.id);
+          {rooms.map((room: Room, index: number) => {
+            const roomReservations = reservations.filter((r: Reservation) => r.roomId === room.id);
             return (
               <div
                 key={room.id}
@@ -255,7 +256,7 @@ export function ReservationStatusPage() {
                   `}
                 >
                   {roomReservations.map(
-                    (res: { id: string; start: string; end: string; attendees: number; equipment: string[] }) => {
+                    (res: Reservation) => {
                       const left = (timeToMinutes(res.start) / TOTAL_MINUTES) * 100;
                       const width = ((timeToMinutes(res.end) - timeToMinutes(res.start)) / TOTAL_MINUTES) * 100;
                       const isActive = activeReservation === res.id;
@@ -405,15 +406,7 @@ export function ReservationStatusPage() {
             `}
           >
             {myReservationList.map(
-              (res: {
-                id: string;
-                roomId: string;
-                date: string;
-                start: string;
-                end: string;
-                attendees: number;
-                equipment: string[];
-              }) => (
+              (res: Reservation) => (
                 <div
                   key={res.id}
                   css={css`
