@@ -139,9 +139,15 @@ describe('예약하기 심화', () => {
 
     await screen.findByText('예약 가능 회의실');
 
-    const roomButtons = screen.getAllByRole('button', { pressed: false }).filter(
-      el => el.getAttribute('aria-label') && !['확정', '예약하기', '취소', 'TV', '화이트보드', '화상장비', '스피커', '뒤로가기'].includes(el.getAttribute('aria-label')!)
-    );
+    const roomButtons = screen
+      .getAllByRole('button', { pressed: false })
+      .filter(
+        el =>
+          el.getAttribute('aria-label') &&
+          !['확정', '예약하기', '취소', 'TV', '화이트보드', '화상장비', '스피커', '뒤로가기'].includes(
+            el.getAttribute('aria-label')!
+          )
+      );
     const roomNames = roomButtons.map(el => el.getAttribute('aria-label'));
 
     const floorOrder = roomNames.map(name => {
