@@ -54,12 +54,59 @@
 - 같은 컴포넌트에 `ReservationStatusPage`와 `HomePage` 두 이름이 생기면 팀원 간 혼란 가능
 - 현행 구조가 더 적절하다고 판단하되, 다른 과제 참여자들의 의견도 궁금함
 
-### 1.3 페이지 컴포넌트가 모놀리식
+### 1.3 페이지 컴포넌트가 모놀리식 ✅
 
 - `RoomBookingPage` 594줄, `ReservationStatusPage` 471줄 — 단일 컴포넌트에 모든 로직이 집중
 - `requirements.md`에도 `FilterPanel`, `AvailableRoomList`, `Timeline`, `MyReservations` 같은 단위가 명시되어 있음
 - 한 컴포넌트가 URL 상태 동기화, 필터링 로직, API mutation, 에러 핸들링, 폼 렌더링, 결과 렌더링을 전부 담당
 - 개별 단위 테스트 불가, 재사용 불가, 인지 부하 높음
+
+#### 분리 기준 판단
+
+컴포넌트 분리에는 두 가지 기준이 있음:
+
+1. **재사용 (DRY)** — 2곳 이상에서 쓰일 때 분리. 현재 코드에서 추출 대상 섹션은 각 페이지에서만 사용되므로 재사용 기준으로는 분리 불필요
+2. **관심사 분리 (SRP)** — 한 파일이 너무 많은 것을 알고 있을 때. 500줄짜리 컴포넌트는 한 명이 전체를 이해해야 수정 가능
+
+→ **관심사 분리 기준**으로 시각/기능 블록 단위 분해 선택
+
+#### 적용 내역
+
+**변경한 것:**
+
+| 페이지 | 추출된 컴포넌트 | 역할 |
+|--------|----------------|------|
+| `RoomBookingPage` | `FilterPanel` | 날짜, 시간, 인원, 장비, 층 입력 폼 + 검증 에러 표시 |
+| `RoomBookingPage` | `AvailableRoomList` | 필터된 회의실 목록 + 선택 + 예약 버튼 |
+| `ReservationStatusPage` | `ReservationTimeline` | 시간 헤더 + 회의실별 예약 바 + 툴팁 (activeReservation 상태 자체 소유) |
+| `ReservationStatusPage` | `MyReservationsList` | 내 예약 목록 + 취소 버튼 |
+
+**왜 이 단위로 분리했는가:**
+
+- `FilterPanel`: 6개 입력 필드(날짜, 시작/종료 시간, 인원, 장비, 층)가 하나의 "예약 조건"이라는 맥락을 공유함. 이 중 하나만 떼어내면(예: 장비 선택만 분리) 조건 간 관계가 끊어짐 — 장비 변경 시 `handleFilterChange`로 선택 초기화가 필요한데, 이 흐름이 컴포넌트 경계를 넘게 됨. 더 쪼개는 건 이후 공통 폼 컴포넌트(LabeledSelect 등) 추출 시 자연스럽게 진행 가능
+- `AvailableRoomList`: 필터 결과를 "보여주고 선택받는" 역할. FilterPanel과 분리한 이유는 변경 이유가 다르기 때문 — FilterPanel은 입력 UI 변경 시, AvailableRoomList는 결과 표시 방식 변경 시 수정됨
+- `ReservationTimeline`: 타임라인은 시간 계산(`timeToMinutes`, `TOTAL_MINUTES`), 위치 계산(`left`, `width`), 툴팁 상태(`activeReservation`)를 자체적으로 소유하는 독립된 시각화 단위. 페이지에서 받는 건 `rooms`와 `reservations` 데이터뿐
+- `MyReservationsList`: 예약 목록 표시 + 취소 액션. 타임라인과는 데이터 소스(전체 예약 vs 내 예약)와 표시 방식(바 차트 vs 리스트)이 완전히 다름
+
+**네이밍 근거:**
+
+- `requirements.md`의 이름(`FilterPanel`, `AvailableRoomList`, `Timeline`, `MyReservations`)을 참고했으나 그대로 사용한 건 아님
+- `ReservationTimeline`으로 변경한 이유: `Timeline`은 너무 범용적. "무엇의" 타임라인인지 이름에서 알 수 있어야 함
+- `MyReservationsList`로 변경한 이유: `MyReservations`는 데이터를 가리키는 이름이지 컴포넌트 이름이 아님. `List` suffix로 "목록 UI 컴포넌트"임을 명시
+
+**추출하지 않은 것과 그 이유:**
+
+- `DatePickerSection` — 10줄 미만으로, 분리 시 props 전달 오버헤드가 코드량보다 큼
+- `BackHeader`, `BookButton` — 한 줄 버튼. 별도 파일로 분리할 추상화 이득 없음
+- `MessageBanner` / `ErrorBanner` — 2.5 알림 패턴 통일에서 별도로 다룰 예정
+
+**왜 이렇게 했는가:**
+
+- 각 페이지에 남는 것은 상태 선언, useQuery/useMutation, 비즈니스 로직, 에러 핸들링 — "무엇을 하는가" (로직)
+- 추출된 컴포넌트는 props를 받아 렌더링만 담당 — "어떻게 보여주는가" (UI)
+- 이 분리를 통해 이후 비즈니스 로직 훅 추출(2.2, 2.4)이 더 자연스러워짐
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 1.4 Error Boundary 부재
 
