@@ -279,19 +279,40 @@ rooms
 
 **검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
-### 2.5 알림/메시지 패턴 통일
+### 2.5 알림/메시지 패턴 통일 ✅
 
 - `RoomBookingPage`: `errorMessage: string | null` (에러만)
 - `ReservationStatusPage`: `message: { type: 'success' | 'error'; text: string } | null` (성공+에러)
 - 동일한 앱인데 서로 다른 패턴 사용
-- 제안: 공통 `useNotification()` 훅 또는 Toast 컴포넌트로 통일
 
-### 2.6 에러 핸들링 불일치
+### 2.6 에러 핸들링 불일치 ✅
 
 - `RoomBookingPage`: `axios.isAxiosError` 체크 + 서버 메시지 파싱 (상세)
 - `ReservationStatusPage`: `catch { }` 로 generic 메시지 (간략)
 - 네트워크 에러, 검증 에러, 서버 에러를 구분하지 않음
-- 제안: `src/utils/errorHandler.ts` 또는 HTTP 레이어에서 공통 에러 변환 처리
+
+#### 적용 내역 (2.5 + 2.6 함께 처리)
+
+**왜 필요했는가:**
+
+- 같은 앱에서 알림 패턴이 2개 (`string | null` vs `{ type, text } | null`) → 새 페이지 추가 시 어느 패턴을 따라야 하는지 불명확
+- 에러 처리 깊이도 불일치 — 한쪽은 서버 메시지를 파싱하고, 다른 쪽은 generic 메시지만 표시
+- `axios` import가 페이지 컴포넌트에 직접 존재하여 HTTP 라이브러리 교체 시 페이지마다 수정 필요
+
+**변경한 것:**
+
+- `src/hooks/useNotification.ts` 신규 생성 — `{ notification, notify, clear }` API로 알림 상태 관리 통일
+- `src/utils/errorHandler.ts` 신규 생성 — `getErrorMessage(err, fallback)` 함수로 에러 메시지 추출 통일
+- `RoomBookingPage`: `errorMessage` state → `useNotification()` 교체, `axios.isAxiosError` 직접 처리 → `getErrorMessage()` 호출, `axios` import 제거
+- `ReservationStatusPage`: `message` state → `useNotification()` 교체, 파라미터 없는 `catch` → `catch (err: unknown)` + `getErrorMessage()` 사용
+
+**결과:**
+
+- 양쪽 페이지가 동일한 `notify(type, text)` / `clear()` API로 알림을 관리
+- 에러 메시지 추출 로직이 `errorHandler.ts` 한 곳에서 관리 — HTTP 라이브러리 교체 시 이 파일만 수정하면 됨
+- 페이지 컴포넌트에서 `axios` 직접 의존이 제거됨
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 2.7 쿼리 키 매직 스트링 ✅
 

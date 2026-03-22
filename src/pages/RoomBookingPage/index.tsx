@@ -1,7 +1,6 @@
 import { css } from '@emotion/react';
 import { Border, Spacing, Text, Top } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import axios from 'axios';
 import { Equipment, Room } from '_tosslib/server/types';
 import { useRooms, useReservations, useCreateReservation } from 'queries/useReservationQueries';
 import { hasTimeConflict, byFloorThenName, validateBookingInput } from 'utils/reservationFilter';
@@ -10,6 +9,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FilterPanel } from './FilterPanel';
 import { formatDate } from 'utils/date';
 import { AvailableRoomList } from './AvailableRoomList';
+import { useNotification } from 'hooks/useNotification';
+import { getErrorMessage } from 'utils/errorHandler';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export function RoomBookingPage() {
     searchParams.get('floor') ? Number(searchParams.get('floor')) : null
   );
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { notification, notify, clear: clearNotification } = useNotification();
 
   useEffect(() => {
     const params: Record<string, string> = {};
@@ -45,7 +46,7 @@ export function RoomBookingPage() {
 
   const handleFilterChange = () => {
     setSelectedRoomId(null);
-    setErrorMessage(null);
+    clearNotification();
   };
 
   const validation = validateBookingInput(startTime, endTime, attendees);
@@ -65,11 +66,11 @@ export function RoomBookingPage() {
 
   const handleBook = async () => {
     if (!selectedRoomId) {
-      setErrorMessage('회의실을 선택해주세요.');
+      notify('error', '회의실을 선택해주세요.');
       return;
     }
     if (!startTime || !endTime) {
-      setErrorMessage('시작 시간과 종료 시간을 선택해주세요.');
+      notify('error', '시작 시간과 종료 시간을 선택해주세요.');
       return;
     }
 
@@ -89,15 +90,10 @@ export function RoomBookingPage() {
       }
 
       const errResult = result as { message?: string };
-      setErrorMessage(errResult.message ?? '예약에 실패했습니다.');
+      notify('error', errResult.message ?? '예약에 실패했습니다.');
       setSelectedRoomId(null);
     } catch (err: unknown) {
-      let serverMessage = '예약에 실패했습니다.';
-      if (axios.isAxiosError(err)) {
-        const data = err.response?.data as { message?: string } | undefined;
-        serverMessage = data?.message ?? serverMessage;
-      }
-      setErrorMessage(serverMessage);
+      notify('error', getErrorMessage(err, '예약에 실패했습니다.'));
       setSelectedRoomId(null);
     }
   };
@@ -167,7 +163,7 @@ export function RoomBookingPage() {
         예약하기
       </Top.Top03>
 
-      {errorMessage && (
+      {notification && notification.type === 'error' && (
         <div
           css={css`
             padding: 0 24px;
@@ -185,7 +181,7 @@ export function RoomBookingPage() {
             `}
           >
             <Text typography="t7" fontWeight="medium" color={colors.red500}>
-              {errorMessage}
+              {notification.text}
             </Text>
           </div>
         </div>

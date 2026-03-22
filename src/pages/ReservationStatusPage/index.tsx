@@ -8,6 +8,8 @@ import { useRooms, useReservations, useMyReservations, useCancelReservation } fr
 import { ReservationTimeline } from './ReservationTimeline';
 import { MyReservationsList } from './MyReservationsList';
 import { formatDate } from 'utils/date';
+import { useNotification } from 'hooks/useNotification';
+import { getErrorMessage } from 'utils/errorHandler';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();
@@ -15,8 +17,8 @@ export function ReservationStatusPage() {
   const [date, setDate] = useState(formatDate(new Date()));
 
   const locationState = location.state as { message?: string } | null;
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    locationState?.message ? { type: 'success', text: locationState.message } : null
+  const { notification, notify } = useNotification(
+    locationState?.message ? { type: 'success' as const, text: locationState.message } : null
   );
 
   useEffect(() => {
@@ -33,9 +35,9 @@ export function ReservationStatusPage() {
   const handleCancel = async (id: string) => {
     try {
       await cancelMutation.mutateAsync(id);
-      setMessage({ type: 'success', text: '예약이 취소되었습니다.' });
-    } catch {
-      setMessage({ type: 'error', text: '취소에 실패했습니다.' });
+      notify('success', '예약이 취소되었습니다.');
+    } catch (err: unknown) {
+      notify('error', getErrorMessage(err, '취소에 실패했습니다.'));
     }
   };
 
@@ -114,7 +116,7 @@ export function ReservationStatusPage() {
       <Border size={8} />
       <Spacing size={24} />
 
-      {message && (
+      {notification && (
         <div
           css={css`
             padding: 0 24px;
@@ -124,7 +126,7 @@ export function ReservationStatusPage() {
             css={css`
               padding: 10px 14px;
               border-radius: 10px;
-              background: ${message.type === 'success' ? colors.blue50 : colors.red50};
+              background: ${notification.type === 'success' ? colors.blue50 : colors.red50};
               display: flex;
               align-items: center;
               gap: 8px;
@@ -133,9 +135,9 @@ export function ReservationStatusPage() {
             <Text
               typography="t7"
               fontWeight="medium"
-              color={message.type === 'success' ? colors.blue600 : colors.red500}
+              color={notification.type === 'success' ? colors.blue600 : colors.red500}
             >
-              {message.text}
+              {notification.text}
             </Text>
           </div>
           <Spacing size={12} />
