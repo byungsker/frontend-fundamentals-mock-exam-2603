@@ -25,7 +25,7 @@ export const Typography = {
   ST13: 'st13',
 } as const;
 
-export type TypographyValue = typeof Typography[keyof typeof Typography];
+export type TypographyValue = (typeof Typography)[keyof typeof Typography];
 
 export const FontWeight = {
   Regular: 'regular' as const,
@@ -33,7 +33,7 @@ export const FontWeight = {
   Semibold: 'semibold' as const,
   Bold: 'bold' as const,
 };
-export type FontWeightValue = typeof FontWeight[keyof typeof FontWeight];
+export type FontWeightValue = (typeof FontWeight)[keyof typeof FontWeight];
 
 export interface BaseProps {
   children?: ReactNode;

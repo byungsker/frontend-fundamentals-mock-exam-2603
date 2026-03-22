@@ -13,14 +13,62 @@ export const rooms: Room[] = [
 
 export const reservations: Reservation[] = [
   { id: 'res-1', roomId: 'room-1', date: '2026-03-10', start: '09:00', end: '10:00', attendees: 5, equipment: ['tv'] },
-  { id: 'res-2', roomId: 'room-1', date: '2026-03-10', start: '14:00', end: '15:30', attendees: 8, equipment: ['tv', 'video'] },
-  { id: 'res-3', roomId: 'room-2', date: '2026-03-10', start: '10:00', end: '11:30', attendees: 4, equipment: ['whiteboard'] },
-  { id: 'res-4', roomId: 'room-4', date: '2026-03-10', start: '13:00', end: '14:00', attendees: 6, equipment: ['tv', 'speaker'] },
-  { id: 'res-5', roomId: 'room-6', date: '2026-03-10', start: '09:30', end: '11:00', attendees: 15, equipment: ['tv', 'video', 'speaker'] },
-  { id: 'res-6', roomId: 'room-7', date: '2026-03-10', start: '15:00', end: '16:30', attendees: 5, equipment: ['tv', 'whiteboard'] },
+  {
+    id: 'res-2',
+    roomId: 'room-1',
+    date: '2026-03-10',
+    start: '14:00',
+    end: '15:30',
+    attendees: 8,
+    equipment: ['tv', 'video'],
+  },
+  {
+    id: 'res-3',
+    roomId: 'room-2',
+    date: '2026-03-10',
+    start: '10:00',
+    end: '11:30',
+    attendees: 4,
+    equipment: ['whiteboard'],
+  },
+  {
+    id: 'res-4',
+    roomId: 'room-4',
+    date: '2026-03-10',
+    start: '13:00',
+    end: '14:00',
+    attendees: 6,
+    equipment: ['tv', 'speaker'],
+  },
+  {
+    id: 'res-5',
+    roomId: 'room-6',
+    date: '2026-03-10',
+    start: '09:30',
+    end: '11:00',
+    attendees: 15,
+    equipment: ['tv', 'video', 'speaker'],
+  },
+  {
+    id: 'res-6',
+    roomId: 'room-7',
+    date: '2026-03-10',
+    start: '15:00',
+    end: '16:30',
+    attendees: 5,
+    equipment: ['tv', 'whiteboard'],
+  },
 ];
 
 export const myReservations: Reservation[] = [
   { id: 'res-1', roomId: 'room-1', date: '2026-03-10', start: '09:00', end: '10:00', attendees: 5, equipment: ['tv'] },
-  { id: 'res-4', roomId: 'room-4', date: '2026-03-10', start: '13:00', end: '14:00', attendees: 6, equipment: ['tv', 'speaker'] },
+  {
+    id: 'res-4',
+    roomId: 'room-4',
+    date: '2026-03-10',
+    start: '13:00',
+    end: '14:00',
+    attendees: 6,
+    equipment: ['tv', 'speaker'],
+  },
 ];

@@ -13,7 +13,16 @@ type Props = PropsWithChildren<{
   disabled?: boolean;
 }>;
 function Button(props: Props) {
-  const { type = 'primary', style = 'fill', size = 'big', display = 'inline', disabled, className, children, ...rest } = props;
+  const {
+    type = 'primary',
+    style = 'fill',
+    size = 'big',
+    display = 'inline',
+    disabled,
+    className,
+    children,
+    ...rest
+  } = props;
   const buttonId = useId();
 
   return (

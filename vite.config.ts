@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   css: {
@@ -23,6 +24,10 @@ export default defineConfig({
     alias: {
       _tosslib: path.resolve(__dirname, 'src/_tosslib'),
       pages: path.resolve(__dirname, 'src/pages'),
+      api: path.resolve(__dirname, 'src/api'),
+      layouts: path.resolve(__dirname, 'src/layouts'),
+      router: path.resolve(__dirname, 'src/router'),
+      queries: path.resolve(__dirname, 'src/queries'),
       containers: path.resolve(__dirname, 'src/containers'),
       components: path.resolve(__dirname, 'src/components'),
       sections: path.resolve(__dirname, 'src/sections'),

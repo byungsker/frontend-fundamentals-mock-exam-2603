@@ -27,6 +27,10 @@
     "paths": {
       "_tosslib/*": ["_tosslib/*"],
       "pages/*": ["pages/*"],
+      "api/*": ["api/*"],
+      "layouts/*": ["layouts/*"],
+      "router/*": ["router/*"],
+      "queries/*": ["queries/*"],
       "containers/*": ["containers/*"],
       "components/*": ["components/*"],
       "sections/*": ["sections/*"],
@@ -39,6 +43,6 @@
       "stores/*": ["stores/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "vitest.setup.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
