@@ -4,7 +4,7 @@
 
 ## 1. 구조적 개선점
 
-### 1.1 `src/pages/` 하위 유틸 파일 위치 개선
+### 1.1 `src/pages/` 하위 유틸 파일 위치 개선 ✅
 
 현재 `src/pages/` 직하에 페이지가 아닌 파일이 섞여 있어 어색함:
 
@@ -14,6 +14,24 @@
 | `src/pages/remotes.ts` | `src/api/remotes.ts` | API 엔드포인트 함수도 API 레이어 |
 | `src/pages/PageLayout.tsx` | `src/layouts/PageLayout.tsx` | 레이아웃은 별도 폴더 |
 | `src/pages/Routes.tsx` | `src/Routes.tsx` | 라우트 정의는 src 루트 |
+
+#### 적용 내역
+
+**변경한 것:**
+- `http.ts`, `remotes.ts` → `src/api/`로 이동 (API 통신 레이어)
+- `PageLayout.tsx` → `src/layouts/`로 이동 (레이아웃 컴포넌트)
+- `Routes.tsx` → `src/router/`로 이동 (라우트 정의)
+- `tsconfig.json`, `vite.config.ts`에 `api`, `layouts`, `router` path alias 추가
+- 모든 import 경로 일괄 수정 (`pages/http` → `api/http`, `pages/remotes` → `api/remotes` 등)
+
+**왜 이렇게 했는가:**
+- `src/pages/`는 페이지 컴포넌트만 담는 폴더여야 하는데, HTTP 클라이언트·API 함수·레이아웃·라우트 정의가 섞여 있으면 폴더의 역할이 모호해짐
+- 관심사별로 분리하면 "API 관련 코드는 `api/`에서, 라우팅은 `router/`에서" 찾을 수 있어 탐색 비용이 줄어듦
+
+**계획과 달라진 점:**
+- 원래 `Routes.tsx`를 `src/` 루트(`src/Routes.tsx`)로 이동하려 했으나, 테스트 실행 시 vite가 `import { Routes } from 'Routes'`를 resolve하지 못하는 문제가 발생함. vite는 `tsconfig`의 `baseUrl`을 자동 인식하지 않고 명시적 alias만 사용하는데, 기존 alias가 모두 폴더 단위(`pages/*`, `api/*` 등)로 구성되어 있어 단일 파일을 src 루트에 두면 이 패턴이 깨짐. 폴더 단위 alias 패턴을 유지하기 위해 `src/router/Routes.tsx`로 변경함
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 1.2 ReservationStatusPage가 `/`인 점
 
@@ -42,6 +60,20 @@
   - 예: `(r: { roomId: string; date: string; start: string; end: string })` — `Reservation`과 동일
 - 가독성 저하, 중복, 변경 시 누락 위험
 - 개선: `remotes.ts`의 API 반환 타입에 `Room[]`, `Reservation[]`을 지정하고, 페이지 컴포넌트에서는 명시적 인터페이스 참조로 교체
+
+#### 적용 내역
+
+**변경한 것:**
+- `src/api/remotes.ts`: API 반환 타입을 인라인에서 `Room[]`, `Reservation[]`로 교체, `createReservation` 파라미터를 `Omit<Reservation, 'id'>`로 변경
+- `src/pages/RoomBookingPage/index.tsx`: `Equipment`, `Reservation`, `Room` import 추가, 6곳의 인라인 타입을 인터페이스 참조로 교체, `ALL_EQUIPMENT`와 `equipment` state 타입을 `Equipment[]`로 변경
+- `src/pages/ReservationStatusPage/index.tsx`: `Room`, `Reservation` import 추가, 5곳의 인라인 타입을 인터페이스 참조로 교체
+
+**왜 이렇게 했는가:**
+- 근본 원인은 `remotes.ts`의 API 반환 타입이 인라인이라 타입 추론이 안 되는 것. 여기서 타입을 제대로 지정하면 하위 소비자(페이지 컴포넌트)에서 타입 추론이 작동함
+- 콜백 매개변수(`res`, `room` 등)에는 명시적으로 타입을 달아둠 — 타입 추론만으로는 IDE에서 Cmd+클릭으로 인터페이스 정의로 점프할 수 없기 때문
+- `Equipment[]` 도입으로 `string[]`보다 엄격한 타입 안전성 확보
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 2.2 useQuery/useMutation → 커스텀 훅 분리
 
@@ -198,6 +230,19 @@ rooms
 - 예약 성공 후 `navigate('/', { state: { message: '...' } })`로 메시지 전달
 - `history.replaceState`로 네비게이션 state는 지우지만, 컴포넌트 local state는 유지됨
 - 메시지가 자동으로 사라지지 않음 (타임아웃 또는 dismiss 버튼 필요)
+
+#### 근거
+
+1.1 파일 구조 리팩토링 후 테스트(`vitest run`) 실행 시, `ReservationStatusPage`에서 다음 경고가 발생함:
+
+```
+Warning: Can't perform a React state update on an unmounted component.
+This is a no-op, but it indicates a memory leak in your application.
+To fix, cancel all subscriptions and asynchronous tasks in a useEffect cleanup function.
+    at ReservationStatusPage (.../src/pages/ReservationStatusPage/index.tsx:162:56)
+```
+
+코드 분석 시 예상한 문제가 테스트 로그에서 실제로 확인된 것. 컴포넌트가 언마운트된 후에도 `location.state`에서 읽은 메시지로 state 업데이트를 시도하고 있음. React 17에서는 경고가 노출되며 (React 18에서는 이 경고가 제거됨), 실제 메모리 릭은 아니지만 cleanup 로직이 누락되어 있다는 신호임.
 
 ### 6.6 타임존 미고려
 

@@ -27,6 +27,9 @@
     "paths": {
       "_tosslib/*": ["_tosslib/*"],
       "pages/*": ["pages/*"],
+      "api/*": ["api/*"],
+      "layouts/*": ["layouts/*"],
+      "router/*": ["router/*"],
       "containers/*": ["containers/*"],
       "components/*": ["components/*"],
       "sections/*": ["sections/*"],

@@ -5,8 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalPortal } from './GlobalPortal';
 
 import '_tosslib/sass/app.scss';
-import { PageLayout } from 'pages/PageLayout';
-import { Routes } from 'pages/Routes';
+import { PageLayout } from 'layouts/PageLayout';
+import { Routes } from 'router/Routes';
 
 export default function App() {
   const [queryClient] = useState(

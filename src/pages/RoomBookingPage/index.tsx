@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Border, Button, ListRow, Select, Spacing, Text, Top } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import axios from 'axios';
-import { createReservation, getReservations, getRooms } from 'pages/remotes';
+import { createReservation, getReservations, getRooms } from 'api/remotes';
 import { Equipment, Reservation, Room } from '_tosslib/server/types';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';

@@ -1,4 +1,4 @@
-import { http } from 'pages/http';
+import { http } from 'api/http';
 import { Room, Reservation } from '_tosslib/server/types';
 
 export function getRooms() {

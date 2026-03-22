@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Top, Spacing, Border, Button, Text, ListRow } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
-import { getRooms, getReservations, getMyReservations, cancelReservation } from 'pages/remotes';
+import { getRooms, getReservations, getMyReservations, cancelReservation } from 'api/remotes';
 import { Room, Reservation } from '_tosslib/server/types';
 
 const EQUIPMENT_LABELS: Record<string, string> = {

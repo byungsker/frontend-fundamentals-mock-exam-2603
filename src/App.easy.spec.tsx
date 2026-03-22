@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { describe, test, expect, afterEach, vi } from 'vitest';
 import App from './App';
-import * as remotes from 'pages/remotes';
+import * as remotes from 'api/remotes';
 
 describe('예약 현황 페이지', () => {
   afterEach(() => {
