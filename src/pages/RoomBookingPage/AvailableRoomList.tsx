@@ -2,7 +2,7 @@ import { css } from '@emotion/react';
 import { Button, ListRow, Spacing, Text } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { Room } from '_tosslib/server/types';
-import { EQUIPMENT_LABELS } from './FilterPanel';
+import { EQUIPMENT_LABELS } from 'constants/booking';
 
 interface AvailableRoomListProps {
   rooms: Room[];

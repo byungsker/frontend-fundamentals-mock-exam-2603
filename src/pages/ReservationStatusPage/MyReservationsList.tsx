@@ -2,13 +2,7 @@ import { css } from '@emotion/react';
 import { Spacing, Text, ListRow, Button } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import { Reservation } from '_tosslib/server/types';
-
-const EQUIPMENT_LABELS: Record<string, string> = {
-  tv: 'TV',
-  whiteboard: '화이트보드',
-  video: '화상장비',
-  speaker: '스피커',
-};
+import { EQUIPMENT_LABELS } from 'constants/booking';
 
 interface MyReservationsListProps {
   reservations: Reservation[];

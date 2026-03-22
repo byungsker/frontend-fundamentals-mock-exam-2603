@@ -193,7 +193,7 @@ v5로 마이그레이션하면 `useQuery({ queryKey, queryFn })` 객체 형태, 
 
 **검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
-### 2.3 상수/유틸 함수 중복 → 공통 모듈 추출
+### 2.3 상수/유틸 함수 중복 → 공통 모듈 추출 ✅
 
 두 페이지에 동일한 코드가 중복:
 
@@ -205,6 +205,33 @@ v5로 마이그레이션하면 `useQuery({ queryKey, queryFn })` 객체 형태, 
 | `TIMELINE_START`, `TIMELINE_END` 등 상수 | `ReservationStatusPage` (매직 넘버로 `RoomBookingPage`에도 암묵적 존재) |
 
 제안: `src/constants/booking.ts`, `src/utils/date.ts` 등으로 추출
+
+#### 적용 내역
+
+**왜 필요했는가:**
+
+- `EQUIPMENT_LABELS`가 3곳(`FilterPanel.tsx`, `ReservationTimeline.tsx`, `MyReservationsList.tsx`)에 동일하게 정의
+- `TIME_SLOTS` 생성 로직이 2곳, `formatDate()`가 2곳에 중복
+- 장비 타입이 추가되거나 운영 시간이 변경될 때 하나만 수정하고 나머지를 누락할 위험이 있음
+
+**변경한 것:**
+
+- `src/constants/booking.ts` 신규 생성 — `EQUIPMENT_LABELS`, `ALL_EQUIPMENT`, `TIME_SLOTS`, `TIMELINE_START`, `TIMELINE_END`, `TOTAL_MINUTES`, `HOUR_LABELS`
+- `src/utils/date.ts` 신규 생성 — `formatDate()`, `timeToMinutes()`
+- 6개 파일에서 로컬 정의를 제거하고 공유 모듈 import로 교체
+
+**왜 `constants/`와 `utils/`를 분리했는가:**
+
+- 상수(값)와 함수(로직)는 성격이 다름 — 하나의 파일에 모으면 또 다른 모놀리식이 됨
+- `constants/`는 변경 빈도가 낮은 설정값, `utils/`는 순수 함수 모음으로 역할이 명확
+
+**결과:**
+
+- 3곳에 중복 정의되던 상수/함수가 각각 1곳에서만 관리됨
+- 새로운 장비 타입 추가 시 `constants/booking.ts`만 수정하면 전체 반영
+- 각 컴포넌트 파일은 자신의 UI 로직에만 집중
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 2.4 필터링/검증 로직 분리 및 체이닝 개선
 

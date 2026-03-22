@@ -7,13 +7,7 @@ import { Room } from '_tosslib/server/types';
 import { useRooms, useReservations, useMyReservations, useCancelReservation } from 'queries/useReservationQueries';
 import { ReservationTimeline } from './ReservationTimeline';
 import { MyReservationsList } from './MyReservationsList';
-
-function formatDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { formatDate } from 'utils/date';
 
 export function ReservationStatusPage() {
   const navigate = useNavigate();

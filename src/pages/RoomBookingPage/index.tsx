@@ -6,7 +6,8 @@ import { Equipment, Reservation, Room } from '_tosslib/server/types';
 import { useRooms, useReservations, useCreateReservation } from 'queries/useReservationQueries';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FilterPanel, formatDate } from './FilterPanel';
+import { FilterPanel } from './FilterPanel';
+import { formatDate } from 'utils/date';
 import { AvailableRoomList } from './AvailableRoomList';
 
 export function RoomBookingPage() {
