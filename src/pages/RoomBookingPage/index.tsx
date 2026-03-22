@@ -2,8 +2,9 @@ import { css } from '@emotion/react';
 import { Border, Spacing, Text, Top } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import axios from 'axios';
-import { Equipment, Reservation, Room } from '_tosslib/server/types';
+import { Equipment, Room } from '_tosslib/server/types';
 import { useRooms, useReservations, useCreateReservation } from 'queries/useReservationQueries';
+import { hasTimeConflict, byFloorThenName, validateBookingInput } from 'utils/reservationFilter';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FilterPanel } from './FilterPanel';
@@ -47,35 +48,19 @@ export function RoomBookingPage() {
     setErrorMessage(null);
   };
 
-  let validationError: string | null = null;
-  const hasTimeInputs = startTime !== '' && endTime !== '';
-  if (hasTimeInputs) {
-    if (endTime <= startTime) {
-      validationError = '종료 시간은 시작 시간보다 늦어야 합니다.';
-    } else if (attendees < 1) {
-      validationError = '참석 인원은 1명 이상이어야 합니다.';
-    }
-  }
-  const isFilterComplete = hasTimeInputs && !validationError;
+  const validation = validateBookingInput(startTime, endTime, attendees);
+  const validationError = validation.error ?? null;
+  const isFilterComplete = validation.valid;
 
   const floors = [...new Set(rooms.map((r: Room) => r.floor))].sort((a, b) => a - b);
 
   const availableRooms = isFilterComplete
     ? rooms
-        .filter((room: Room) => {
-          if (room.capacity < attendees) return false;
-          if (!equipment.every(eq => room.equipment.includes(eq))) return false;
-          if (preferredFloor !== null && room.floor !== preferredFloor) return false;
-          const hasConflict = reservations.some(
-            (r: Reservation) => r.roomId === room.id && r.date === date && r.start < endTime && r.end > startTime
-          );
-          if (hasConflict) return false;
-          return true;
-        })
-        .sort((a: Room, b: Room) => {
-          if (a.floor !== b.floor) return a.floor - b.floor;
-          return a.name.localeCompare(b.name);
-        })
+        .filter((room: Room) => room.capacity >= attendees)
+        .filter((room: Room) => equipment.every(eq => room.equipment.includes(eq)))
+        .filter((room: Room) => preferredFloor === null || room.floor === preferredFloor)
+        .filter((room: Room) => !hasTimeConflict(room, reservations, date, startTime, endTime))
+        .sort(byFloorThenName)
     : [];
 
   const handleBook = async () => {

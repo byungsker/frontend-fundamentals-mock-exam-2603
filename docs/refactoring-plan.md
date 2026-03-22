@@ -233,7 +233,7 @@ v5로 마이그레이션하면 `useQuery({ queryKey, queryFn })` 객체 형태, 
 
 **검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
-### 2.4 필터링/검증 로직 분리 및 체이닝 개선
+### 2.4 필터링/검증 로직 분리 및 체이닝 개선 ✅
 
 `RoomBookingPage`의 필터링 로직(용량, 장비, 층, 시간 충돌 체크)이 렌더 로직에 인라인으로 존재하며, `.filter()` 콜백 하나에 4가지 조건이 뭉쳐 있음:
 
@@ -257,10 +257,27 @@ rooms
   .sort(byFloorThenName);
 ```
 
-- 체이닝 자체는 유지 (선언적, 데이터 흐름이 보임)
-- 각 `.filter()`가 하나의 조건만 담당 → 조건 추가/제거가 한 줄 단위로 가능
-- 충돌 체크 같은 복잡한 로직은 함수로 추출 → 독립적 테스트 가능
-- 비즈니스 로직을 UI에서 분리하면 `useAvailableRooms()` 커스텀 훅 또는 `src/utils/reservationFilter.ts`로 추출 가능
+#### 적용 내역
+
+**왜 필요했는가:**
+
+- `.filter()` 콜백 하나에 4가지 조건(용량, 장비, 층, 시간 충돌)이 뭉쳐 있어 어떤 조건으로 필터링됐는지 디버깅이 어려움
+- 검증 로직(`validationError` 계산)도 컴포넌트 본문에 `let`과 `if/else`로 직접 작성되어 있어 단위 테스트 불가
+- 비즈니스 로직이 UI 컴포넌트에 종속되어, 로직만 변경하고 싶어도 컴포넌트 전체를 이해해야 함
+
+**변경한 것:**
+
+- `src/utils/reservationFilter.ts` 신규 생성 — `hasTimeConflict()`, `byFloorThenName()`, `validateBookingInput()` 순수 함수
+- `RoomBookingPage/index.tsx`에서 인라인 필터링 로직을 조건별 `.filter()` 체인으로 분리, 충돌 체크와 정렬은 추출된 함수 호출로 교체
+- 인라인 검증 로직(`let validationError` + `if/else`)을 `validateBookingInput()` 함수 호출로 교체
+
+**결과:**
+
+- 체이닝은 유지하되 각 `.filter()`가 하나의 조건만 담당 → 조건 추가/제거가 한 줄 단위
+- 충돌 체크, 정렬, 검증이 순수 함수로 추출되어 UI와 독립적으로 단위 테스트 가능
+- 컴포넌트에서 `Reservation` 타입 import가 불필요해져 제거됨 (충돌 체크 로직이 `reservationFilter.ts`로 이동)
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 2.5 알림/메시지 패턴 통일
 
