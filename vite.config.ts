@@ -27,6 +27,7 @@ export default defineConfig({
       api: path.resolve(__dirname, 'src/api'),
       layouts: path.resolve(__dirname, 'src/layouts'),
       router: path.resolve(__dirname, 'src/router'),
+      queries: path.resolve(__dirname, 'src/queries'),
       containers: path.resolve(__dirname, 'src/containers'),
       components: path.resolve(__dirname, 'src/components'),
       sections: path.resolve(__dirname, 'src/sections'),

@@ -159,11 +159,39 @@
 
 **검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
-### 2.2 useQuery/useMutation → 커스텀 훅 분리
+### 2.2 useQuery/useMutation → 커스텀 훅 분리 ✅
 
 - 현재: 페이지 컴포넌트 내부에서 직접 `useQuery`, `useMutation` 호출
 - 제안: `src/queries/` 폴더를 만들어 커스텀 훅으로 분리
   - 예: `useRooms()`, `useReservations(date)`, `useCreateReservation()`, `useCancelReservation()`
+
+#### 적용 내역
+
+**변경한 것:**
+
+- `src/queries/queryKeys.ts` 신규 생성 — 쿼리 키 상수를 중앙 관리 (2.7도 함께 해결)
+- `src/queries/useReservationQueries.ts` 신규 생성 — `useRooms`, `useReservations`, `useMyReservations`, `useCreateReservation`, `useCancelReservation` 5개 훅
+- 양쪽 페이지에서 `useQuery`/`useMutation` 직접 호출 → 커스텀 훅으로 교체
+- `tsconfig.json`, `vite.config.ts`에 `queries` alias 추가
+
+**왜 이렇게 했는가:**
+
+- `useQuery(['rooms'], getRooms)`가 양쪽 페이지에서 완전히 동일하게 중복. 커스텀 훅으로 한 곳에서 관리하면 쿼리 옵션(staleTime 등) 변경 시 한 곳만 수정하면 됨
+- 캐시 무효화 로직(`invalidateQueries`)이 페이지마다 다르게 작성되어 있었음 (RoomBookingPage는 특정 날짜만, ReservationStatusPage는 전체). 뮤테이션 훅 안에 무효화 로직을 캡슐화하여 일관성 확보
+
+**고민한 것들:**
+
+- `as const`를 쓰지 않은 이유: React Query v4의 queryKey 타입이 `readonly unknown[]`이라 `string[]`이 그대로 할당 가능. v5의 `queryOptions` 패턴처럼 키 기반 타입 추론을 체이닝하는 경우가 아니면 불필요
+- `useRooms`를 `useReservationQueries.ts`에 함께 둔 이유: 이 앱에서 rooms는 예약 플로우 안에서만 사용되며 독립적인 회의실 관리 기능이 없음. 회의실 관리 페이지가 추가되면 그때 분리
+- 훅을 파일 5개로 분리하는 것도 검토했으나, 같은 도메인의 쿼리를 한 파일에 모아두는 것이 이 규모에서는 더 적절
+
+**React Query v4→v5 deprecated 경고에 대해:**
+
+커스텀 훅 작성 과정에서 `useQuery(queryKey, queryFn)`, `invalidateQueries(queryKey)`, `isLoading` 등에 deprecated 경고가 발생하는 것을 확인함. 이는 설치된 `@tanstack/react-query@^4.43.0`의 타입 정의가 v5 마이그레이션을 사전 안내하기 위해 기존 시그니처에 `@deprecated` 태그를 추가한 것이며, 현재 v4 런타임에서는 정상 동작함.
+
+v5로 마이그레이션하면 `useQuery({ queryKey, queryFn })` 객체 형태, `isLoading` → `isPending` 등 breaking changes가 다수 포함되어 있어, 이미 잘 동작하도록 완성된 구현에서 마이그레이션하는 것은 런타임 에러를 유발할 수 있는 불필요한 위험을 만드는 것임. 팀 차원의 마이그레이션 계획 없이 개별적으로 API를 변경하는 것은 적절하지 않다고 판단하여 현행 v4 API를 유지함.
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ### 2.3 상수/유틸 함수 중복 → 공통 모듈 추출
 
@@ -221,11 +249,11 @@ rooms
 - 네트워크 에러, 검증 에러, 서버 에러를 구분하지 않음
 - 제안: `src/utils/errorHandler.ts` 또는 HTTP 레이어에서 공통 에러 변환 처리
 
-### 2.7 쿼리 키 매직 스트링
+### 2.7 쿼리 키 매직 스트링 ✅
 
 - `['rooms']`, `['reservations', date]`, `['myReservations']`가 두 파일에 흩어져 있음
 - 한쪽만 변경 시 캐시 불일치 발생
-- 제안: `src/queries/queryKeys.ts`에 상수로 중앙 관리
+- 2.2에서 커스텀 훅 분리와 함께 해결 — `src/queries/queryKeys.ts`에 상수로 중앙 관리
 
 ## 3. 코드 컨벤션 개선점
 

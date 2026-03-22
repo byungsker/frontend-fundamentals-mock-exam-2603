@@ -30,6 +30,7 @@
       "api/*": ["api/*"],
       "layouts/*": ["layouts/*"],
       "router/*": ["router/*"],
+      "queries/*": ["queries/*"],
       "containers/*": ["containers/*"],
       "components/*": ["components/*"],
       "sections/*": ["sections/*"],

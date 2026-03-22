@@ -1,10 +1,9 @@
 import { css } from '@emotion/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Border, Spacing, Text, Top } from '_tosslib/components';
 import { colors } from '_tosslib/constants/colors';
 import axios from 'axios';
-import { createReservation, getReservations, getRooms } from 'api/remotes';
 import { Equipment, Reservation, Room } from '_tosslib/server/types';
+import { useRooms, useReservations, useCreateReservation } from 'queries/useReservationQueries';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FilterPanel, formatDate } from './FilterPanel';
@@ -12,7 +11,6 @@ import { AvailableRoomList } from './AvailableRoomList';
 
 export function RoomBookingPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [date, setDate] = useState(searchParams.get('date') || formatDate(new Date()));
@@ -39,20 +37,9 @@ export function RoomBookingPage() {
     setSearchParams(params, { replace: true });
   }, [date, startTime, endTime, attendees, equipment, preferredFloor, setSearchParams]);
 
-  const { data: rooms = [] } = useQuery(['rooms'], getRooms);
-  const { data: reservations = [] } = useQuery(['reservations', date], () => getReservations(date), {
-    enabled: !!date,
-  });
-
-  const createMutation = useMutation(
-    (data: Omit<Reservation, 'id'>) => createReservation(data),
-    {
-      onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries(['reservations', variables.date]);
-        queryClient.invalidateQueries(['myReservations']);
-      },
-    }
-  );
+  const { data: rooms = [] } = useRooms();
+  const { data: reservations = [] } = useReservations(date);
+  const createMutation = useCreateReservation();
 
   const handleFilterChange = () => {
     setSelectedRoomId(null);
@@ -129,12 +116,30 @@ export function RoomBookingPage() {
     }
   };
 
-  const handleDateChange = (value: string) => { setDate(value); handleFilterChange(); };
-  const handleStartTimeChange = (value: string) => { setStartTime(value); handleFilterChange(); };
-  const handleEndTimeChange = (value: string) => { setEndTime(value); handleFilterChange(); };
-  const handleAttendeesChange = (value: number) => { setAttendees(value); handleFilterChange(); };
-  const handleEquipmentChange = (value: Equipment[]) => { setEquipment(value); handleFilterChange(); };
-  const handleFloorChange = (value: number | null) => { setPreferredFloor(value); handleFilterChange(); };
+  const handleDateChange = (value: string) => {
+    setDate(value);
+    handleFilterChange();
+  };
+  const handleStartTimeChange = (value: string) => {
+    setStartTime(value);
+    handleFilterChange();
+  };
+  const handleEndTimeChange = (value: string) => {
+    setEndTime(value);
+    handleFilterChange();
+  };
+  const handleAttendeesChange = (value: number) => {
+    setAttendees(value);
+    handleFilterChange();
+  };
+  const handleEquipmentChange = (value: Equipment[]) => {
+    setEquipment(value);
+    handleFilterChange();
+  };
+  const handleFloorChange = (value: number | null) => {
+    setPreferredFloor(value);
+    handleFilterChange();
+  };
 
   return (
     <div
