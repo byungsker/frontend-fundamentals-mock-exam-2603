@@ -108,10 +108,30 @@
 
 **검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
-### 1.4 Error Boundary 부재
+### 1.4 Error Boundary 부재 ✅
 
 - 앱 전체에 Error Boundary가 없음
 - 쿼리 실패나 런타임 에러 시 앱 전체가 빈 화면으로 전환됨
+
+#### 왜 필요한가
+
+- React에서 컴포넌트 렌더링 중 에러가 발생하면 전체 컴포넌트 트리가 언마운트되어 빈 화면이 됨
+- 사용자는 무슨 일이 일어났는지 알 수 없고, 복구할 방법도 없음 (새로고침 외에)
+- Error Boundary는 에러를 캐치하여 fallback UI를 보여주고, 사용자가 "다시 시도"로 복구할 수 있게 함
+
+#### 적용 내역
+
+**변경한 것:**
+
+- `src/components/ErrorBoundary.tsx` 신규 생성 — class 컴포넌트로 구현 (React의 Error Boundary는 class 컴포넌트에서만 지원)
+- `src/App.tsx` — `<PageLayout>` 안, `<Routes />` 바깥에 `<ErrorBoundary>` 배치
+
+**왜 이 위치에 배치했는가:**
+
+- `PageLayout` 바깥에 두면 레이아웃 자체의 에러도 캐치하지만, 에러 시 레이아웃(모바일 프레임)이 사라져 fallback UI가 전체 화면에 뜸
+- `PageLayout` 안, `Routes` 바깥에 두면 레이아웃은 유지되면서 페이지 렌더링 에러만 캐치 → fallback UI가 모바일 프레임 안에서 자연스럽게 표시됨
+
+**검증:** `tsc --noEmit` 통과, `vitest run` 20개 테스트 전체 통과
 
 ## 2. 추상화 개선점
 

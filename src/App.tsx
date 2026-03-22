@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalPortal } from './GlobalPortal';
 
 import '_tosslib/sass/app.scss';
+import { ErrorBoundary } from 'components/ErrorBoundary';
 import { PageLayout } from 'layouts/PageLayout';
 import { Routes } from 'router/Routes';
 
@@ -35,7 +36,9 @@ export default function App() {
           `}
         />
         <PageLayout>
-          <Routes />
+          <ErrorBoundary>
+            <Routes />
+          </ErrorBoundary>
         </PageLayout>
       </GlobalPortal.Provider>
     </QueryClientProvider>
